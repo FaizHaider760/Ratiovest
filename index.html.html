@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RatioVest – Weigh a stock before you buy it</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0A0620;--g1:#3a1670;--g2:#0b4b57;--bg2:#160B3A;--glass:rgba(255,255,255,.06);--line:rgba(255,255,255,.12);--ink:#F2EEFF;--muted:#A79FCB;--teal:#19E6C1;--pink:#FF4FD8;--gold:#FFC857;--good:#19E6C1;--ok:#FFC857;--weak:#FF5C7A;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:'Sora',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;background:radial-gradient(900px 600px at 85% -5%,var(--g1) 0,transparent 60%),radial-gradient(700px 500px at -10% 40%,var(--g2) 0,transparent 55%),var(--bg);background-attachment:fixed;min-height:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--pink));display:inline-block}
+.brand span{color:var(--muted);font-weight:300;font-size:14px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px;align-items:center;margin:14px 0 26px}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+h1{font-size:clamp(34px,5.6vw,62px);line-height:1;letter-spacing:-.045em;font-weight:800;margin:10px 0 14px;background:linear-gradient(120deg,#fff 30%,var(--teal) 70%,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);max-width:44ch;margin:0 0 22px}
+.verdict{display:inline-block;padding:16px 20px;border-radius:20px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);min-width:min(100%,360px)}
+.verdict .big{font-size:54px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.verdict .big small{font-size:16px;color:var(--muted);font-weight:500;letter-spacing:0}
+.verdict h3{margin:6px 0 2px;font-size:20px;letter-spacing:-.02em}
+.verdict p{margin:0;color:var(--muted);font-size:14px}
+.pill{display:inline-block;margin-top:10px;padding:4px 12px;border-radius:99px;font-size:13px;font-weight:700;border:1px solid currentColor}
+#stage{position:relative;height:clamp(300px,42vw,460px);touch-action:pan-y}
+#stage canvas{width:100%;height:100%;display:block;cursor:grab}
+.nogl{position:absolute;inset:0;display:none;place-items:center;color:var(--muted)}
+.lbl{position:absolute;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
+.grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:22px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 24px 60px -30px #000}
+h2{font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
+.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button{font:inherit;cursor:pointer}
+.chip{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:7px 14px;font-size:13px}
+.chip.on,.chip:hover{background:linear-gradient(120deg,var(--teal),var(--pink));color:#12062e;border-color:transparent;font-weight:700}
+details{border-top:1px solid var(--line);padding:10px 0}
+summary{cursor:pointer;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"+";color:var(--teal)}details[open] summary::after{content:"–"}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:480px){.f{grid-template-columns:1fr}}
+label{font-size:12px;color:var(--muted);display:block}
+input{width:100%;margin-top:3px;font:inherit;font-weight:700;font-size:15px;color:var(--ink);background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px;perspective:900px}
+@media(max-width:620px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{padding:12px;border-radius:16px;background:var(--glass);border:1px solid var(--line);transition:transform .15s;transform-style:preserve-3d}
+.tile b{display:block;font-size:26px;letter-spacing:-.04em;line-height:1.1}
+.tile span{font-size:12px;color:var(--muted)}
+.tile em{display:block;height:4px;border-radius:4px;margin-top:8px;background:rgba(255,255,255,.1);overflow:hidden}
+.tile em u{display:block;height:100%;border-radius:4px;transition:width .5s}
+.sec{margin-top:16px}
+.sec h4{margin:0 0 4px;font-size:15px;display:flex;justify-content:space-between}
+.r{display:grid;grid-template-columns:1fr auto;gap:0 12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.r .n{font-weight:500;font-size:14px}.r .v{font-weight:800;text-align:right}
+.r .d{grid-column:1/-1;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.good{color:var(--good)}.ok{color:var(--ok)}.weak{color:var(--weak)}
+.bg-good{background:var(--good)}.bg-ok{background:var(--ok)}.bg-weak{background:var(--weak)}
+.note{font-size:12.5px;color:var(--muted);margin-top:18px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1}
+.story{min-height:100vh;display:flex;align-items:center}
+.story .txt{max-width:460px;padding:6px 0}
+@media(max-width:860px){.story .txt{background:rgba(10,6,32,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:18px;border-radius:20px}}
+.story h2{font-size:clamp(30px,4.6vw,52px);letter-spacing:-.04em;line-height:1.05;margin:0 0 12px;font-weight:800}
+#app{padding-top:40px}
+#mini{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:5;padding:8px 16px;border-radius:99px;background:rgba(10,6,32,.6);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:13px}
+#mini b{font-size:16px;margin-right:6px}
+.paper{background:#FAF8F1!important;color:#1B1840;border-color:#E4DFCF!important;box-shadow:0 30px 60px -28px #000,0 0 0 6px rgba(255,255,255,.04)}
+.paper h2,.paper summary{color:#1B1840}
+.paper .hint{color:#625E88}
+.paper details{border-top:1px solid #D9D4C0}
+.paper summary::after{color:#0A8F78}
+.paper .f{display:block;margin-top:4px}
+.paper label{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#2C2858;font-size:14px;padding:7px 0;border-bottom:1px dotted #BDB8A2}
+.paper input{width:130px;margin:0;text-align:right;background:transparent;border:0;border-bottom:1.5px solid #1B1840;border-radius:0;color:#1B1840;padding:2px 4px;font-variant-numeric:tabular-nums}
+.paper input:focus-visible{outline:none;background:#DDF6EE}
+.paper .chip{color:#1B1840;border-color:#BDB8A2}
+.paper .chip.on,.paper .chip:hover{color:#12062e}
+#res.glass{background:#FAF8F1!important;color:#1B1840;border-color:#E4DFCF!important;padding:10px 20px 18px}
+#res .sec{margin-top:14px}
+#res .sec h4{background:#ECE8D8;color:#1B1840;padding:9px 12px;border-radius:10px;font-size:14px;margin:0}
+#res .sec h4 span.good{color:#0B8F6F}#res .sec h4 span.ok{color:#A8690A}#res .sec h4 span.weak{color:#C72D48}
+#res .r{display:grid;grid-template-columns:1fr 96px 74px;align-items:center;gap:0 10px;padding:10px 12px;border-bottom:1px solid #E4DFCF}
+#res .r:nth-child(even){background:#F4F1E6}
+#res .n{color:#1B1840;font-weight:600;font-size:14.5px}
+#res .n small{display:block;color:#625E88;font-weight:400;font-size:12px}
+#res .v{text-align:right;font-weight:800;font-size:16px;color:#1B1840;font-variant-numeric:tabular-nums}
+#res .tg{text-align:center;font-size:12px;font-weight:700;padding:4px 0;border-radius:99px}
+#res .tg.good{background:#D7F3EA;color:#07694F}#res .tg.ok{background:#FBEBC6;color:#7A4B00}#res .tg.weak{background:#FADADF;color:#A3213A}#res .tg.na{background:#E8E5D8;color:#625E88}
+@media(max-width:520px){#res .r{grid-template-columns:1fr 78px 62px;padding:9px 6px}}
+.story .txt{background:rgba(10,6,32,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:20px;border-radius:22px}
+#thb{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;padding:10px 18px;border-radius:99px;border:1px solid var(--line);background:rgba(10,6,32,.8);color:var(--ink);font-weight:700;font-size:13px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#thp{position:fixed;right:14px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:6;width:min(300px,calc(100vw - 28px));padding:16px;border-radius:20px;background:rgba(14,10,38,.96);border:1px solid var(--line);box-shadow:0 24px 60px -20px #000}
+#thp[hidden]{display:none}
+#thp h5{margin:0 0 10px;font-size:14px}
+#thp .sw{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#thp .sw button{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);padding:0}
+#thp .sw button.on{border-color:#fff}
+#thp .row{display:flex;align-items:center;justify-content:space-between;color:var(--ink);font-size:13px;margin:8px 0}
+#thp input[type=color]{width:46px;height:30px;padding:0;border:0;background:none;margin:0;border-radius:8px}
+#thp input[type=checkbox]{width:auto;margin:0;accent-color:var(--teal)}
+.cb #res .tg.good{background:#D6E8FF;color:#0A4AA6}.cb #res .tg.weak{background:#FFE2C7;color:#8A3B00}
+.cb #res .sec h4 span.good{color:#0A4AA6}.cb #res .sec h4 span.weak{color:#B34700}
+#res .ch{background:#ECE8D8;border-radius:10px;margin-top:12px;padding:9px 12px}
+#res .ch b{text-align:right;font-size:14px;color:#1B1840}#res .ch b:first-child{text-align:left}
+#res .ch .good{color:#0B8F6F}#res .ch .ok{color:#A8690A}#res .ch .weak{color:#C72D48}
+#res .cv{font-size:14px;padding:3px 6px}
+#res .cv.good{color:#07694F}#res .cv.ok{color:#8A5A00}#res .cv.weak{color:#B3243C}
+#res .win{background:#D7F3EA;border-radius:8px;box-shadow:inset 0 0 0 1.5px #0B8F6F}
+.cb #res .cv.good{color:#0A4AA6}.cb #res .cv.weak{color:#B34700}.cb #res .win{background:#D6E8FF;box-shadow:inset 0 0 0 1.5px #0A4AA6}
+#res .stmh{margin:26px 0 2px;font-size:16px;font-weight:800;color:#1B1840}
+#res .stmp{color:#625E88;font-size:12.5px;margin:0 0 4px}
+#res .v small{color:#625E88;font-weight:500;font-size:11.5px}
+#res .sumh{font-size:18px;font-weight:800;color:#1B1840;margin:8px 0 8px}
+#res .sumo{background:#E5F8F2;border-radius:12px;padding:12px 14px;color:#1B1840;font-size:14.5px;margin:0 0 12px}
+#res .scs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:6px}
+#res .scard{border:1px solid #E4DFCF;border-radius:16px;padding:14px;background:#fff;color:#1B1840;font-size:13px}
+#res .scard p{margin:7px 0}
+#res .sh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#res .sh b{font-size:16px}#res .sb{font-size:28px;font-weight:800;letter-spacing:-.03em}
+#res .sv{font-weight:700;margin-top:2px}
+#res .sb.good,#res .sv.good{color:#07694F}#res .sb.ok,#res .sv.ok{color:#8A5A00}#res .sb.weak,#res .sv.weak{color:#B3243C}
+.cb #res .sb.good,.cb #res .sv.good{color:#0A4AA6}.cb #res .sb.weak,.cb #res .sv.weak{color:#B34700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><i></i>RatioVest <span>invest by the numbers</span></div>
+  <section class="story"><div class="txt">
+    <h1>Weigh a stock before you buy it.</h1>
+    <p class="lede">Type in a company’s numbers. RatioVest checks its health with 26 ratios, tests whether the price is fair, and tips the scale to show you the answer.</p>
+    <div class="verdict" aria-live="polite">
+      <div class="big"><span id="sc">–</span><small> / 100 health</small></div>
+      <h3 id="vt">Waiting for numbers</h3><p id="vd">Pick a sample or type your own figures.</p>
+      <span class="pill" id="pc" hidden></span>
+    </div>
+    <p class="hint" style="margin-top:18px">Scroll to fly through the data.</p></div></section>
+  <section class="story"><div class="txt"><h2>Five orbs. Twenty-six ratios.</h2>
+    <p class="lede">Liquidity, leverage, efficiency, profitability and price. Each orb grows and glows with its group’s score.</p></div></section>
+  <section class="story"><div class="txt"><h2>Every ratio is a tower.</h2>
+    <p class="lede">Teal towers are strong, gold are okay, pink are weak. Enter the numbers and watch the skyline change.</p>
+    <button class="chip on" onclick="document.getElementById('app').scrollIntoView({behavior:'smooth'})">Enter the numbers</button></div></section>
+  <div id="mini" hidden></div>
+
+  <div class="grid" id="app">
+    <section class="glass paper">
+      <h2>Company numbers</h2>
+      <p class="hint">All amounts in PKR millions, except price and dividend per share (PKR).</p>
+      <div class="chips" id="cnt"><span class="hint" style="margin:7px 4px 0 0">Compare</span><button class="chip" data-n="1">1 company</button><button class="chip" data-n="2">2</button><button class="chip" data-n="3">3</button><button class="chip" data-n="4">4</button></div>
+      <div class="chips" id="tabs"></div>
+      <label style="display:flex;gap:10px;align-items:center;margin-bottom:10px">Company name<input id="cname" style="width:100%;text-align:left" maxlength="24"></label>
+      <button class="chip" id="cp" style="margin-bottom:12px" hidden>Copy numbers from my pick</button>
+      <div class="chips"><button class="chip" data-p="0">Sample: steady</button><button class="chip" data-p="1">Sample: stressed</button><button class="chip" data-p="x">Clear</button></div>
+      <div id="forms"></div>
+      <p class="hint" style="margin-top:12px">Sample data is made up for the demo. Opening balances are optional; if empty, closing balances are used.</p>
+    </section>
+    <section>
+      <div class="tiles" id="tiles"></div>
+      <div class="glass" id="res"></div>
+      <p class="note">Benchmarks are general rules of thumb and vary by industry. Receivables use total sales as credit sales. Turnover ratios use average balances (opening + closing) ÷ 2. Educational tool, not financial advice.</p>
+    </section>
+  </div>
+</div>
+
+<button id="thb" aria-expanded="false" aria-controls="thp">Theme</button>
+<div id="thp" hidden><h5>Choose your colours</h5><div class="sw" id="sw"></div>
+<div class="row">Background<input type="color" id="c0"></div><div class="row">Accent one<input type="color" id="c1"></div><div class="row">Accent two<input type="color" id="c2"></div>
+<div class="row"><label for="cbm" style="color:inherit;font-size:13px">Colour-blind friendly (blue / orange)</label><input type="checkbox" id="cbm"></div>
+<button class="chip" id="rst" style="margin-top:6px">Reset</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const G=[['Income statement',[['rev','Sales revenue',12500,6200],['cogs','Cost of goods sold',8000,5400],['ebit','Operating profit (EBIT)',2300,380],['int','Interest expense',350,520],['ni','Net income',1500,-150],['ocf','Operating cash flow',1800,120]]],
+['Balance sheet (closing)',[['cash','Cash',900,90],['ar','Receivables',1500,1500],['inv','Inventory',1400,1100],['ca','Current assets',5200,1800],['ta','Total assets',14000,9000],['cl','Current liabilities',2900,2600],['ap','Payables',1300,900],['tl','Total liabilities',5600,7600]]],
+['Balance sheet (opening)',[['ar0','Receivables',1350,1100],['inv0','Inventory',1250,900],['ap0','Payables',1200,1000],['ta0','Total assets',13000,9300]]],
+['Last year income statement (optional)',[['rev0','Sales revenue',11200,7000],['cogs0','Cost of goods sold',7300,5600],['ebit0','Operating profit (EBIT)',2000,900],['ni0','Net income',1250,300]]],
+['Market data',[['px','Share price (PKR)',150,40],['sh','Shares (millions)',100,100],['dps','Dividend / share (PKR)',7,0]]]];
+const OPT=['ar0','inv0','ap0','ta0','rev0','cogs0','ebit0','ni0'];
+document.getElementById('forms').innerHTML=G.map((g,i)=>`<details ${i<2?'open':''}><summary>${g[0]}</summary><div class="f">${g[1].map(f=>`<label>${f[1]}<input id="${f[0]}" type="number" inputmode="decimal" placeholder="0"></label>`).join('')}</div></details>`).join('');
+const K=G.flatMap(g=>g[1]);
+const $=id=>document.getElementById(id);
+const P={good:100,ok:55,weak:12};
+function gr(x,a,b,hi=true){if(!isFinite(x))return 'weak';return hi?(x>=a?'good':x>=b?'ok':'weak'):(x<=a?'good':x<=b?'ok':'weak')}
+const fx=x=>isFinite(x)?x.toFixed(2)+'×':'n/a', fp=x=>isFinite(x)?(x*100).toFixed(1)+'%':'n/a', fd=x=>isFinite(x)?Math.round(x)+' days':'n/a', fn=x=>isFinite(x)?x.toFixed(2):'n/a';
+function calc(V){
+  const v={};
+  for(const [k] of K.map(a=>a)){let n=parseFloat(V[k]);if(isNaN(n)){if(OPT.includes(k)){n=NaN}else return null}v[k]=n}
+  const raw={...v};
+  OPT.forEach(k=>{if(isNaN(v[k]))v[k]=v[k.replace('0','')]});
+  if(v.ta<=0||v.cl<=0||v.sh<=0)return null;
+  const eq=v.ta-v.tl; if(eq<=0)return {neg:true};
+  const av=(a,b)=>(a+b)/2, aAR=av(v.ar,v.ar0), aInv=av(v.inv,v.inv0), aAP=av(v.ap,v.ap0), aTA=av(v.ta,v.ta0);
+  const rt=v.rev/aAR, it=v.cogs/aInv, pt=v.cogs/aAP, dso=365/rt, dio=365/it, dpo=365/pt;
+  const eps=v.ni/v.sh, bv=eq/v.sh, pe=v.ni>0?v.px/eps:NaN;
+  const L=[
+   ['Liquidity',[
+    ['Current ratio',v.ca/v.cl,fx,'Can it pay bills due this year?',gr(v.ca/v.cl,1.5,1)],
+    ['Acid-test ratio',(v.ca-v.inv)/v.cl,fx,'Same test without unsold stock.',gr((v.ca-v.inv)/v.cl,1,.7)],
+    ['Cash ratio',v.cash/v.cl,fx,'Can cash alone cover short-term bills?',gr(v.cash/v.cl,.5,.2)]]],
+   ['Leverage',[
+    ['Debt to equity',v.tl/eq,fx,'Owed for every rupee of owners’ money.',gr(v.tl/eq,1,2,false)],
+    ['Debt ratio',v.tl/v.ta,fp,'Share of assets paid for with debt.',gr(v.tl/v.ta,.5,.65,false)],
+    ['Interest coverage',v.int>0?v.ebit/v.int:99,fx,'How many times profit covers interest.',v.int>0?gr(v.ebit/v.int,4,2):'good']]],
+   ['Efficiency',[
+    ['Receivable turnover',rt,fx,'How often customers’ debts are collected.',gr(rt,8,5)],
+    ['Avg collection period',dso,fd,'Days to get paid by customers.',gr(dso,45,75,false)],
+    ['Inventory turnover',it,fx,'How fast stock sells.',gr(it,6,3)],
+    ['Days inventory held',dio,fd,'Days stock sits before selling.',gr(dio,60,120,false)],
+    ['Payable turnover',pt,fx,'How often it pays suppliers.',gr(pt,6,3)],
+    ['Avg payment period',dpo,fd,'Days it takes to pay suppliers.',gr(dpo,60,90,false)],
+    ['Total asset turnover',v.rev/aTA,fx,'Sales earned per rupee of assets.',gr(v.rev/aTA,1,.5)],
+    ['Cash conversion cycle',dio+dso-dpo,fd,'Days cash is stuck in operations.',gr(dio+dso-dpo,60,120,false)]]],
+   ['Profitability',[
+    ['Gross profit margin',(v.rev-v.cogs)/v.rev,fp,'Profit after direct costs.',gr((v.rev-v.cogs)/v.rev,.3,.15)],
+    ['Operating margin',v.ebit/v.rev,fp,'Profit from core business.',gr(v.ebit/v.rev,.12,.05)],
+    ['Net profit margin',v.ni/v.rev,fp,'Profit kept from each rupee of sales.',gr(v.ni/v.rev,.1,.04)],
+    ['ROI (return on assets)',v.ni/aTA,fp,'Profit earned on everything it owns.',gr(v.ni/aTA,.06,.025)],
+    ['Return on equity',v.ni/eq,fp,'Return on the owners’ money.',gr(v.ni/eq,.15,.08)],
+    ['Cash flow ÷ net income',v.ni>0?v.ocf/v.ni:NaN,fx,'Are profits real cash? Above 1 is best.',gr(v.ni>0?v.ocf/v.ni:NaN,1,.7)]]],
+   ['Valuation (price check)',[
+    ['Earnings per share',eps,fn,'Profit for each share (PKR).',null],
+    ['P/E ratio',pe,fx,'Years of profit you pay for. Lower is cheaper.',v.ni>0?gr(pe,12,20,false):'weak'],
+    ['Book value per share',bv,fn,'Net assets per share (PKR).',null],
+    ['Price to book',v.px/bv,fx,'Price vs. what the company owns.',gr(v.px/bv,1.5,3,false)],
+    ['Dividend yield',v.dps/v.px,fp,'Cash payout as % of price.',gr(v.dps/v.px,.05,.02)],
+    ['Payout ratio',v.ni>0?v.dps/eps:NaN,fp,'Share of profit paid out. Below 60% is sustainable.',v.ni>0?gr(v.dps/eps,.6,.9,false):'weak']]]];
+  L.cs=[['Income statement (% of sales)',[['Sales',v.rev,v.rev],['Cost of goods sold',v.cogs,v.rev],['Gross profit',v.rev-v.cogs,v.rev],['Operating profit (EBIT)',v.ebit,v.rev],['Interest expense',v.int,v.rev],['Net income',v.ni,v.rev]]],
+   ['Balance sheet (% of total assets)',[['Cash',v.cash,v.ta],['Receivables',v.ar,v.ta],['Inventory',v.inv,v.ta],['Current assets',v.ca,v.ta],['Non-current assets',v.ta-v.ca,v.ta],['Current liabilities',v.cl,v.ta],['Payables',v.ap,v.ta],['Long-term liabilities',v.tl-v.cl,v.ta],['Total liabilities',v.tl,v.ta],['Owners’ equity',eq,v.ta]]]];
+  L.ix=[['Sales',v.rev,raw.rev0],['Cost of goods sold',v.cogs,raw.cogs0],['Operating profit (EBIT)',v.ebit,raw.ebit0],['Net income',v.ni,raw.ni0],['Receivables',v.ar,raw.ar0],['Inventory',v.inv,raw.inv0],['Payables',v.ap,raw.ap0],['Total assets',v.ta,raw.ta0]];
+  return L;
+}
+const score=a=>{const g=a.filter(r=>r[4]);return Math.round(g.reduce((s,r)=>s+P[r[4]],0)/g.length)};
+let target=0,tilt=0,has=false,viz=()=>{},themeGL=()=>{};
+function renderOne(V){
+  const L=calc(V), res=$('res'), tiles=$('tiles');
+  const reset=(t,d)=>{viz(null);$('mini').hidden=true;res.innerHTML='';tiles.innerHTML='';$('sc').textContent='–';$('vt').textContent=t;$('vd').textContent=d;$('pc').hidden=true;has=false;target=0};
+  if(!L)return reset('Waiting for numbers','Fill the first two groups and market data.');
+  if(L.neg){reset('Liabilities exceed assets','Equity is negative. Treat as very high risk.');target=-.4;has=true;$('sc').textContent='0';return}
+  const sc=L.map(g=>score(g[1])), health=Math.round(sc.slice(0,4).reduce((a,b)=>a+b)/4), pv=sc[4];
+  const lv=x=>x>=70?'good':x>=45?'ok':'weak';
+  $('sc').textContent=health;$('sc').className=lv(health);
+  const price=pv>=70?'Cheap':pv>=45?'Fairly priced':'Expensive';
+  const pc=$('pc');pc.hidden=false;pc.textContent='Price check: '+price;pc.className='pill '+lv(pv);
+  let t,d;
+  if(health>=70&&pv>=45){t='Strong candidate';d='Healthy company at a '+(pv>=70?'low':'fair')+' price. Worth shortlisting.'}
+  else if(health>=70){t='Great company, pricey stock';d='Fundamentals are strong, but the price is high. Consider waiting.'}
+  else if(health>=45){t='Mixed. Research more';d='Some areas are fine, others need a closer look.'}
+  else{t='Avoid for now';d='Several ratios are weak. Protect your money.'}
+  $('vt').textContent=t;$('vd').textContent=d;
+  has=true;target=(health-50)/50*.42;viz(L,sc);$('mini').hidden=false;$('mini').innerHTML='<b class="'+lv(health)+'">'+health+'</b>'+t;
+  tiles.innerHTML=L.map((g,i)=>`<div class="tile"><b class="${lv(sc[i])}">${sc[i]}</b><span>${g[0].replace(' (price check)','')}</span><em><u class="bg-${lv(sc[i])}" style="width:${sc[i]}%"></u></em></div>`).join('');
+  res.innerHTML=L.map((g,i)=>`<div class="sec"><h4>${g[0]}<span class="${lv(sc[i])}">${sc[i]}/100</span></h4>${g[1].map(r=>`<div class="r"><span class="n">${r[0]}<small>${r[3]}</small></span><span class="v">${r[2](r[1])}</span><span class="tg ${r[4]||'na'}">${r[4]?({good:'Strong',ok:'Okay',weak:'Weak'})[r[4]]:'Info'}</span></div>`).join('')}</div>`).join('');
+}
+function load(i){K.forEach(f=>{co[act].v[f[0]]=i==='x'?'':String(f[2+ +i])});fill();document.querySelectorAll('.chip[data-p]').forEach(b=>b.classList.toggle('on',b.dataset.p===String(i)));render()}
+document.querySelectorAll('.chip[data-p]').forEach(b=>b.onclick=()=>load(b.dataset.p));
+$('forms').addEventListener('input',e=>{co[act].v[e.target.id]=e.target.value;document.querySelectorAll('.chip[data-p]').forEach(b=>b.classList.remove('on'));render()});
+document.querySelectorAll('.tiles').forEach(()=>{});
+document.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('.tile');if(!t)return;const r=t.getBoundingClientRect();t.style.transform=`rotateX(${-((e.clientY-r.top)/r.height-.5)*18}deg) rotateY(${((e.clientX-r.left)/r.width-.5)*18}deg) translateZ(8px)`});
+document.addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest('.tile');if(t)t.style.transform=''});
+
+/* 3D world */
+(function(){
+ try{
+  const R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.9;
+  R.domElement.id='gl';document.body.prepend(R.domElement);
+  const S=new THREE.Scene();S.fog=new THREE.FogExp2(0x0a0620,.016);
+  const C=new THREE.PerspectiveCamera(42,1,.1,140);
+  S.add(new THREE.AmbientLight(0xffffff,.6));
+  const l1=new THREE.PointLight(0x19e6c1,1.2,60);l1.position.set(-8,6,6);S.add(l1);
+  const l2=new THREE.PointLight(0xff4fd8,1.2,60);l2.position.set(8,4,4);S.add(l2);
+  const l3=new THREE.DirectionalLight(0xffffff,.8);l3.position.set(0,10,10);S.add(l3);
+  const mk=(g,mat,x=0,y=0)=>{const o=new THREE.Mesh(g,mat);o.position.set(x,y,0);return o};
+  const gold=new THREE.MeshStandardMaterial({color:0xffc857,metalness:.75,roughness:.28});
+  /* stars */
+  const sp=new Float32Array(2100);for(let i=0;i<700;i++){sp[i*3]=(Math.random()-.5)*70;sp[i*3+1]=(Math.random()-.5)*34;sp[i*3+2]=18-Math.random()*80}
+  const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+  S.add(new THREE.Points(sg,new THREE.PointsMaterial({size:.09,color:0xcbb8ff,transparent:true,opacity:.8})));
+  /* station 1: the scale */
+  const root=new THREE.Group();S.add(root);
+  root.add(mk(new THREE.CylinderGeometry(1.5,1.8,.35,48),gold,0,-1.4));
+  root.add(mk(new THREE.CylinderGeometry(.18,.28,3.9,32),gold,0,.6));
+  root.add(mk(new THREE.SphereGeometry(.4,32,32),gold,0,2.6));
+  const beam=new THREE.Group();beam.position.y=2.6;root.add(beam);beam.add(mk(new THREE.BoxGeometry(5.2,.16,.16),gold));
+  const PM=[];const pan=c=>{const g=new THREE.Group();const m=new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:.35,metalness:.4,roughness:.3});PM.push(m);
+    g.add(mk(new THREE.CylinderGeometry(.03,.03,1.5,8),gold,0,-.75));g.add(mk(new THREE.CylinderGeometry(1.15,.9,.16,48),m,0,-1.5));root.add(g);return g};
+  const PL=pan(0x19e6c1),PR=pan(0xff4fd8);
+  /* station 2: orbs */
+  const ring=new THREE.Group();ring.position.set(0,1.6,-16);S.add(ring);
+  const RM=new THREE.MeshStandardMaterial({color:0x8f7bff,emissive:0x5b3fd0,emissiveIntensity:.8});ring.add(new THREE.Mesh(new THREE.TorusGeometry(3.6,.05,16,140),RM));
+  const orbs=[];for(let i=0;i<5;i++){const a=i/5*Math.PI*2;const o=new THREE.Mesh(new THREE.SphereGeometry(1,40,40),new THREE.MeshStandardMaterial({color:0x8f7bff,metalness:.3,roughness:.2}));o.position.set(Math.cos(a)*3.6,Math.sin(a)*3.6,0);ring.add(o);orbs.push(o)}
+  /* station 3: towers */
+  const grid=new THREE.GridHelper(44,44,0x4a35a0,0x24184f);grid.position.set(0,0,-34);S.add(grid);
+  const bg=new THREE.BoxGeometry(.5,1,.5);bg.translate(0,.5,0);
+  const bars=[];for(let i=0;i<26;i++){const b=new THREE.Mesh(bg,new THREE.MeshStandardMaterial({color:0x8f7bff,metalness:.3,roughness:.25}));b.position.set((i-12.5)*.72,0,-34);b.scale.y=.05;S.add(b);bars.push(b)}
+  const CL={good:0x19e6c1,ok:0xffc857,weak:0xff5c7a};let VIO=0x8f7bff;
+  const oT=Array(5).fill(.5),oC=Array(5).fill(VIO).map(c=>new THREE.Color(c)),bT=Array(26).fill(.3),bC=Array(26).fill(VIO).map(c=>new THREE.Color(c)),oS=Array(5).fill(.6),bS=Array(26).fill(.05);
+  viz=(L,sc)=>{
+    if(!L){oT.fill(.5);bT.fill(.3);oC.forEach(c=>c.set(VIO));bC.forEach(c=>c.set(VIO));return}
+    sc.forEach((s,i)=>{oT[i]=.35+s/100*.75;oC[i].set(s>=70?CL.good:s>=45?CL.ok:CL.weak)});
+    L.flatMap(g=>g[1]).forEach((r,i)=>{bT[i]=r[4]?.3+P[r[4]]/100*4.4:.8;bC[i].set(r[4]?CL[r[4]]:VIO)});
+  };
+  /* camera path */
+  const ST=[[0,1.6,10.5,0,1.5,0],[0,2.2,-3,0,1.5,-16],[0,6.5,-19,0,1,-34]];
+  const W=()=>{const w=innerWidth,h=innerHeight;R.setSize(w,h);C.aspect=w/h;if(w>860)C.setViewOffset(w,h,-w*.24,0,w,h);else C.clearViewOffset();C.updateProjectionMatrix()};
+  addEventListener('resize',W);W();
+  let mx=0,my=0,cp=0;addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1});
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches,V=new THREE.Vector3();
+  (function loop(t){requestAnimationFrame(loop);
+    const p=Math.max(0,Math.min(2,scrollY/innerHeight));cp+=(p-cp)*.07;
+    const i=Math.min(1,Math.floor(cp)),f=cp-i,e=f*f*(3-2*f),a=ST[i],b=ST[i+1],sw=Math.sin(e*Math.PI)*6*(i?-1:1);
+    const L=(k)=>a[k]+(b[k]-a[k])*e;
+    C.position.set(L(0)+sw+mx*.9,L(1)-my*.6,L(2));C.lookAt(L(3),L(4),L(5));
+    const sway=has||still?0:Math.sin(t/900)*.08;tilt+=((target+sway)-tilt)*.05;beam.rotation.z=tilt;
+    const x=2.6,c=Math.cos(tilt),s=Math.sin(tilt);PL.position.set(-x*c,2.6-x*s,0);PR.position.set(x*c,2.6+x*s,0);
+    root.position.y=-.2;if(!still)root.rotation.y=Math.sin(t/2600)*.8;
+    if(!still)ring.rotation.z+=.003;
+    orbs.forEach((o,k)=>{oS[k]+=(oT[k]-oS[k])*.08;o.scale.setScalar(oS[k]);o.material.color.lerp(oC[k],.08);o.material.emissive.copy(o.material.color).multiplyScalar(.16)});
+    bars.forEach((o,k)=>{bS[k]+=(bT[k]-bS[k])*.07;o.scale.y=bS[k];o.material.color.lerp(bC[k],.08);o.material.emissive.copy(o.material.color).multiplyScalar(.14)});
+    R.render(S,C)})(0);
+ themeGL=(T,cb)=>{const c=new THREE.Color();l1.color.set(T.a1);l2.color.set(T.a2);
+    PM[0].color.set(T.a1);PM[0].emissive.set(T.a1);PM[1].color.set(T.a2);PM[1].emissive.set(T.a2);
+    RM.color.set(T.vio);RM.emissive.set(T.vio).multiplyScalar(.5);S.fog.color.set(T.bg);VIO=c.set(T.vio).getHex();
+    CL.good=cb?0x3b9dff:0x19e6c1;CL.weak=cb?0xff8a1f:0xff5c7a;
+    if(!has){oC.forEach(k=>k.set(VIO));bC.forEach(k=>k.set(VIO))}};
+ }catch(e){}
+})();
+let co=[0,1,2,3].map(i=>({n:i?'Company '+'BCD'[i-1]:'My pick',v:{}})),N=2,act=0;
+const LOW=new Set(['Debt to equity','Debt ratio','Avg collection period','Days inventory held','Avg payment period','Cash conversion cycle','P/E ratio','Price to book']);
+const NOW=new Set(['Earnings per share','Book value per share','Payout ratio']);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lv=x=>x>=70?'good':x>=45?'ok':'weak',pl=x=>x>=70?'Cheap':x>=45?'Fair price':'Expensive';
+const okc=v=>{const c=calc(v);return c&&!c.neg?c:null};
+function fill(){K.forEach(f=>{$(f[0]).value=co[act].v[f[0]]??''});$('cname').value=co[act].n;$('cp').hidden=act===0}
+function tabsUI(){$('tabs').innerHTML=co.slice(0,N).map((c,i)=>`<button class="chip${i===act?' on':''}" data-t="${i}">${esc(c.n)}${okc(c.v)?' ✓':''}</button>`).join('');
+  document.querySelectorAll('#cnt .chip').forEach(b=>b.classList.toggle('on',+b.dataset.n===N))}
+function render(){tabsUI();const R=co.slice(0,N).map((c,i)=>({i,n:c.n,L:okc(c.v)})).filter(o=>o.L);
+  const cmp=N>1&&R.length>=2;if(cmp)renderCmp(R);else renderOne(co[act].v);
+  const a=okc(co[act].v),ls=cmp?R:a?[{n:co[act].n,L:a}]:[];$('res').insertAdjacentHTML('beforeend',stmHTML(ls));$('res').insertAdjacentHTML('afterbegin',sumHTML(ls))}
+function sumHTML(ls){
+  if(!ls.length)return '';
+  const m=x=>'PKR '+Math.round(x).toLocaleString()+' m',lab=h=>h>=70?'Healthy':h>=45?'Mixed':'High risk';
+  const D=ls.map(o=>{const sc=o.L.map(g=>score(g[1])),h=Math.round(sc.slice(0,4).reduce((a,b)=>a+b)/4),fl=o.L.flatMap(g=>g[1]).filter(x=>x[4]),
+    g4=o.L.slice(0,4).map((g,i)=>[g[0],sc[i]]).sort((a,b)=>b[1]-a[1]),cs=o.L.cs;
+    return {n:o.n,h,pv:sc[4],best:g4[0],worst:g4[3],good:fl.filter(x=>x[4]==='good').map(x=>x[0]),ok:fl.filter(x=>x[4]==='ok').length,weak:fl.filter(x=>x[4]==='weak').map(x=>x[0]),sales:cs[0][1][0][1],ni:cs[0][1][5][1],eq:cs[1][1][9][1],ta:cs[1][1][0][2]}});
+  const o=[...D].sort((a,b)=>b.h-a.h||b.pv-a.pv),avg=Math.round(D.reduce((s,d)=>s+d.h,0)/D.length);
+  const top=o[0],low=o[o.length-1],cheap=D.reduce((a,b)=>b.pv>a.pv?b:a);
+  const sum=D.length===1?`${esc(top.n)} scores ${top.h}/100 and looks ${lab(top.h).toLowerCase()}. Its strongest area is ${top.best[0].toLowerCase()} and its weakest is ${top.worst[0].toLowerCase()}. Price check: ${pl(top.pv).toLowerCase()}.`:
+    `Average health of these ${D.length} companies: <b>${avg}/100</b>. ${o[1]&&o[1].h===top.h?esc(top.n)+' and '+esc(o[1].n)+' tie for the best ('+top.h+')':esc(top.n)+' is the healthiest ('+top.h+')'}; ${esc(low.n)} is the weakest (${low.h}). Best price: ${esc(cheap.n)} (${pl(cheap.pv).toLowerCase()}).`;
+  const cards=D.map(d=>`<div class="scard"><div class="sh"><b>${esc(d.n)}</b><span class="sb ${lv(d.h)}">${d.h}</span></div><div class="sv ${lv(d.h)}">${lab(d.h)} · ${pl(d.pv)} price</div>
+    <p>Strongest area: <b>${d.best[0]}</b> (${d.best[1]}).<br>Weakest area: <b>${d.worst[0]}</b> (${d.worst[1]}).</p>
+    <p>${d.good.length} strong · ${d.ok} okay · ${d.weak.length} weak ratios</p>
+    <p>Sales ${m(d.sales)}<br>Net income ${m(d.ni)}<br>Equity ${m(d.eq)}<br>Total assets ${m(d.ta)}</p>
+    ${d.good.length?`<p><b>Strengths:</b> ${d.good.slice(0,3).join(', ')}</p>`:''}${d.weak.length?`<p><b>Concerns:</b> ${d.weak.slice(0,3).join(', ')}</p>`:''}</div>`).join('');
+  return `<div class="sumh">Overall summary</div><p class="sumo">${sum}</p><div class="scs">${cards}</div>`}
+function stmHTML(ls){
+  if(!ls.length)return '';
+  const cols=`1.5fr repeat(${ls.length},1fr)`,st=`style="grid-template-columns:${cols}"`,pad=ls.map(()=>'<b></b>').join('');
+  const head=`<div class="r ch" ${st}><span></span>${ls.map(o=>`<b>${esc(o.n)}</b>`).join('')}</div>`;
+  let cs='',ix='';
+  ls[0].L.cs.forEach((g,gi)=>{cs+=`<div class="r ch" ${st}><b>${g[0]}</b>${pad}</div>`;
+    g[1].forEach((w,ri)=>{cs+=`<div class="r" ${st}><span class="n">${w[0]}</span>${ls.map(o=>{const q=o.L.cs[gi][1][ri],p=q[1]/q[2]*100;return `<span class="v cv" style="background:linear-gradient(90deg,rgba(15,181,150,.25) ${Math.min(100,Math.max(0,p))}%,transparent 0)">${p.toFixed(1)}%</span>`}).join('')}</div>`})});
+  ls[0].L.ix.forEach((w,ri)=>{ix+=`<div class="r" ${st}><span class="n">${w[0]}</span>${ls.map(o=>{const q=o.L.ix[ri],i=q[2]>0?q[1]/q[2]*100:NaN;return `<span class="v cv">${isFinite(i)?Math.round(i)+'<small> '+(i>=100?'▲':'▼')+Math.abs(Math.round(i-100))+'%</small>':'<small>add last year</small>'}</span>`}).join('')}</div>`});
+  const wrap=h=>`<div style="overflow-x:auto"><div style="min-width:${ls.length*84+150}px">${head}${h}</div></div>`;
+  return `<div class="stmh">Common-size analysis</div><p class="stmp">Each item as a % of sales (income statement) or of total assets (balance sheet). This lets you compare companies of different sizes fairly.</p>${wrap(cs)}
+  <div class="stmh">Index analysis</div><p class="stmp">Last year = 100. A value of 120 means the item grew 20%. Needs last year’s figures: the opening balances and the optional last-year income statement.</p>${wrap(ix)}`}
+function renderCmp(R){
+  const H=R.map(o=>{const sc=o.L.map(g=>score(g[1]));return {...o,sc,h:Math.round(sc.slice(0,4).reduce((a,b)=>a+b)/4),pv:sc[4],w:0}});
+  const cols=`1.5fr repeat(${H.length},1fr)`;let rows=`<div class="r ch" style="grid-template-columns:${cols}"><span></span>${H.map(o=>`<b>${esc(o.n)}</b>`).join('')}</div>`,tot=0;
+  H[0].L.forEach((g,gi)=>{
+    rows+=`<div class="r ch" style="grid-template-columns:${cols}"><b>${g[0].replace(' (price check)','')}</b>${H.map(o=>`<b class="${lv(o.sc[gi])}">${o.sc[gi]}</b>`).join('')}</div>`;
+    g[1].forEach((row,ri)=>{
+      const vals=H.map(o=>o.L[gi][1][ri][1]);let win=[];
+      if(!NOW.has(row[0])){const f=vals.map((v,i)=>[v,i]).filter(x=>isFinite(x[0]));
+        if(f.length>1){tot++;f.sort((a,b)=>LOW.has(row[0])?a[0]-b[0]:b[0]-a[0]);const ws=f.filter(x=>x[0]===f[0][0]);if(ws.length<f.length){win=ws.map(x=>x[1]);win.forEach(k=>H[k].w++)}}}
+      rows+=`<div class="r" style="grid-template-columns:${cols}"><span class="n">${row[0]}</span>${H.map((o,i)=>{const q=o.L[gi][1][ri];return `<span class="v cv ${q[4]||''}${win.includes(i)?' win':''}">${q[2](q[1])}</span>`}).join('')}</div>`})});
+  $('res').innerHTML=`<div style="overflow-x:auto"><div style="min-width:${H.length*84+150}px">${rows}</div></div><p class="note" style="color:#625E88;margin:12px 0 0">Highlighted box = best value in that row. Lower is better for debt, collection days, cash cycle, P/E and price-to-book.</p>`;
+  const order=[...H].sort((a,b)=>b.h-a.h||b.pv-a.pv),pick=H.find(o=>o.i===0)||H[0],rk=order.indexOf(pick)+1,cheap=H.reduce((a,b)=>b.pv>a.pv?b:a);
+  $('tiles').innerHTML=order.map((o,k)=>`<div class="tile"><b class="${lv(o.h)}">${o.h}</b><span>#${k+1} ${esc(o.n)}</span><em><u class="bg-${lv(o.h)}" style="width:${o.h}%"></u></em><span style="display:block;margin-top:5px">${pl(o.pv)} · wins ${o.w}/${tot}</span></div>`).join('');
+  $('sc').textContent=pick.h;$('sc').className=lv(pick.h);
+  const tie=H.filter(o=>o!==pick&&o.h===pick.h&&o.pv===pick.pv);$('vt').textContent=tie.length?pick.n+' ties with '+tie[0].n:rk===1?pick.n+' comes out on top':pick.n+' ranks #'+rk+' of '+H.length;
+  $('vd').textContent=(rk===1?'Healthiest of the group. ':order[0].n+' is healthiest ('+order[0].h+'). ')+'Best price: '+cheap.n+' ('+pl(cheap.pv)+').';
+  const pc=$('pc');pc.hidden=false;pc.textContent=pick.n+' price check: '+pl(pick.pv);pc.className='pill '+lv(pick.pv);
+  $('mini').hidden=false;$('mini').innerHTML='<b class="'+lv(pick.h)+'">'+pick.h+'</b>#'+rk+' of '+H.length+' · '+esc(pick.n);
+  const oth=H.filter(o=>o!==pick).map(o=>o.h);has=true;target=oth.length?Math.max(-.42,Math.min(.42,(pick.h-Math.max(...oth))/100*.9)):0;viz(pick.L,pick.sc)}
+$('cnt').onclick=e=>{const n=e.target.dataset.n;if(n){N=+n;if(act>=N)act=0;fill();render()}};
+$('tabs').onclick=e=>{const t=e.target.dataset.t;if(t!=null){act=+t;fill();render()}};
+$('cname').oninput=e=>{co[act].n=e.target.value||'Company';render()};
+$('cp').onclick=()=>{co[act].v={...co[0].v};fill();render()};
+const TH={Violet:{bg:'#0A0620',a1:'#19E6C1',a2:'#FF4FD8',vio:'#8F7BFF'},Ocean:{bg:'#04121F',a1:'#3DDCFF',a2:'#4F8CFF',vio:'#5AA2FF'},Forest:{bg:'#06140E',a1:'#4DF0A0',a2:'#D9F24A',vio:'#6FCF97'},Sunset:{bg:'#1A0A0F',a1:'#FFB347',a2:'#FF5E7E',vio:'#FF9A76'},Mono:{bg:'#0B0B0F',a1:'#E8E8F0',a2:'#9AA0B5',vio:'#8A90A5'}};
+const mixc=(a,b,t)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('')};
+let cur={...TH.Violet},cbm=false;
+$('sw').innerHTML=Object.keys(TH).map(k=>`<button title="${k}" aria-label="${k} theme" data-k="${k}" style="background:linear-gradient(135deg,${TH[k].bg} 40%,${TH[k].a1} 40% 70%,${TH[k].a2} 70%)"></button>`).join('');
+function applyTheme(){const d=document.documentElement.style;
+  d.setProperty('--bg',cur.bg);d.setProperty('--teal',cur.a1);d.setProperty('--pink',cur.a2);
+  d.setProperty('--g1',mixc(cur.bg,cur.a2,.4));d.setProperty('--g2',mixc(cur.bg,cur.a1,.35));
+  d.setProperty('--good',cbm?'#3B9DFF':'#19E6C1');d.setProperty('--weak',cbm?'#FF8A1F':'#FF5C7A');
+  document.documentElement.classList.toggle('cb',cbm);
+  $('c0').value=cur.bg;$('c1').value=cur.a1;$('c2').value=cur.a2;$('cbm').checked=cbm;
+  document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',JSON.stringify(TH[b.dataset.k])===JSON.stringify(cur)));
+  themeGL(cur,cbm);render();
+  try{localStorage.setItem('rv-theme',JSON.stringify({cur,cbm}))}catch(e){}}
+$('thb').onclick=()=>{const h=$('thp').hidden;$('thp').hidden=!h;$('thb').setAttribute('aria-expanded',String(h))};
+$('sw').onclick=e=>{const k=e.target.dataset&&e.target.dataset.k;if(k){cur={...TH[k]};applyTheme()}};
+['c0','c1','c2'].forEach((id,i)=>$(id).oninput=e=>{const v=e.target.value;if(i==0)cur.bg=v;if(i==1)cur.a1=v;if(i==2)cur.a2=v;cur.vio=mixc(cur.a1,cur.a2,.5);applyTheme()});
+$('cbm').onchange=e=>{cbm=e.target.checked;applyTheme()};
+$('rst').onclick=()=>{cur={...TH.Violet};cbm=false;applyTheme()};
+try{const sv=JSON.parse(localStorage.getItem('rv-theme')||'null');if(sv&&sv.cur){cur=sv.cur;cbm=!!sv.cbm}}catch(e){}
+applyTheme();
+act=1;load(1);act=0;load(0);
+</script>
+</body>
+</html>
